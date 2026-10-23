@@ -268,7 +268,13 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
-  if (!content) return;
+  const htmlString = `<span>${content}</span>`;
+  if (htmlString.length > 30) {
+    showNotification('Validation error: Raw HTML length exceeded 30 chars!', 'danger');
+    return;
+  }
+
+  if (!content || !content.trim()) return;
 
   try {
     const res = await fetch('/api/threads', {
