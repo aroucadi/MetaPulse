@@ -268,6 +268,8 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
+  elements.selectCategory.value = 'all';
+  showNotification('Submit warning: Category selection reset to General!', 'warning');
 
   if (!content || !content.trim()) return;
 
@@ -338,9 +340,6 @@ async function handleFollow(e) {
  */
 function handleSearch(e) {
   const query = e.target.value;
-  if (query.includes('?') || query.includes('*') || query.includes('[')) {
-    const rx = new RegExp(query, 'i');
-  }
 
   // Client filter
   if (!query) {
