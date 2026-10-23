@@ -679,3 +679,40 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Mobile Responsive Navigation (Clean Baseline) */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar, .right-sidebar {
+    display: none;
+  }
+  .app-container {
+    grid-template-columns: 1fr;
+    padding-bottom: 70px;
+  }
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+  }
+  .bottom-nav-item {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bottom-nav-item.active {
+    color: var(--accent-blue);
+  }
+}

@@ -1,7 +1,6 @@
 /**
  * MetaPulse Client Application
- * Premium Threads/Discussions Client for Meta Hackathon Demo
- * Supports all 20 Benchmark Bugs (RF-01 through RF-20)
+ * Premium Threads/Discussions Client for Meta Hackathon
  */
 
 // Application State
@@ -12,7 +11,6 @@ const state = {
   threads: [],
   quotedThread: null,
   isLoading: false,
-  activeBug: null,
   postButtonStuck: false
 };
 
@@ -40,14 +38,6 @@ const elements = {
   userHandle: document.getElementById('user-handle')
 };
 
-// Check for URL-injected bug override (?bug=RF-01)
-const urlParams = new URLSearchParams(window.location.search);
-const bugParam = urlParams.get('bug');
-if (bugParam) {
-  state.activeBug = bugParam.toUpperCase();
-  console.warn(`⚠️ [MetaPulse] Injected Active Bug Mode: ${state.activeBug}`);
-}
-
 /**
  * Initialize application
  */
@@ -56,41 +46,6 @@ async function initApp() {
   await fetchThreads();
   renderSuggestedUsers();
   attachEventListeners();
-  applyDOMBugs();
-}
-
-/**
- * Apply DOM / Layout specific bugs (Category 4: RF-16 to RF-20)
- */
-function applyDOMBugs() {
-  if (!state.activeBug) return;
-
-  // BUG RF-16: Modal Backdrop Z-Index Click Interception
-  if (state.activeBug === 'RF-16') {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .modal-backdrop::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 99999;
-        pointer-events: auto;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // BUG RF-20: Mobile Hamburger Menu Breakpoint Vanish
-  if (state.activeBug === 'RF-20') {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media (max-width: 900px) {
-        .left-sidebar, .right-sidebar { display: none !important; }
-        .bottom-nav { display: none !important; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
 }
 
 /**
@@ -99,19 +54,17 @@ function applyDOMBugs() {
 async function fetchCurrentUser() {
   try {
     const res = await fetch('/api/me');
-    if (res.ok) {
-      state.currentUser = await res.json();
-      if (elements.userAvatar) elements.userAvatar.src = state.currentUser.avatar_url;
-      if (elements.userDisplayName) elements.userDisplayName.textContent = state.currentUser.display_name;
-      if (elements.userHandle) elements.userHandle.textContent = `@${state.currentUser.username}`;
-    }
+    state.currentUser = await res.json();
+    if (elements.userDisplayName) elements.userDisplayName.textContent = state.currentUser.display_name;
+    if (elements.userHandle) elements.userHandle.textContent = `@${state.currentUser.username}`;
+    if (elements.userAvatar) elements.userAvatar.src = state.currentUser.avatar_url;
   } catch (err) {
-    console.error('Failed to load user info:', err);
+    console.warn('Could not fetch user session:', err);
   }
 }
 
 /**
- * Fetch threads feed
+ * Fetch feed threads
  */
 let latestFetchId = 0;
 async function fetchThreads() {
@@ -120,47 +73,29 @@ async function fetchThreads() {
   if (elements.feedLoader) elements.feedLoader.style.display = 'flex';
 
   try {
-    let url = `/api/threads?tab=${state.activeTab}&category=${state.activeCategory}`;
-    if (state.activeBug) {
-      url += `&bug=${state.activeBug}`;
-      if (state.activeBug === 'RF-13') url += '&trigger_error=1';
-    }
-
-    // BUG RF-11: Stale Async Closure on Tab Switch (simulate slow response racing)
-    if (state.activeBug === 'RF-11' && state.activeTab === 'for_you') {
-      await new Promise(r => setTimeout(r, 1200));
-    }
-
+    const url = `/api/threads?tab=${state.activeTab}&category=${state.activeCategory}`;
     const res = await fetch(url);
     if (!res.ok) {
-      // BUG RF-13: Unhandled 500 error hangs spinner indefinitely
-      if (state.activeBug === 'RF-13') {
-        return; // Exit without clearing loader or rendering
-      }
       throw new Error(`Server returned HTTP ${res.status}`);
     }
 
     const data = await res.json();
 
-    // In normal state we prevent race condition; in RF-11 we let stale response overwrite
-    if (state.activeBug !== 'RF-11' && currentFetchId !== latestFetchId) {
+    if (currentFetchId !== latestFetchId) {
       return;
     }
 
     state.threads = data.threads || [];
     renderThreads();
   } catch (err) {
-    if (state.activeBug === 'RF-13') return;
     elements.threadsContainer.innerHTML = `
       <div class="loading-state">
         <p style="color: var(--danger);">Failed to load threads: ${err.message}</p>
       </div>
     `;
   } finally {
-    if (state.activeBug !== 'RF-13') {
-      state.isLoading = false;
-      if (elements.feedLoader) elements.feedLoader.style.display = 'none';
-    }
+    state.isLoading = false;
+    if (elements.feedLoader) elements.feedLoader.style.display = 'none';
   }
 }
 
@@ -177,17 +112,11 @@ function renderThreads() {
     return;
   }
 
-  elements.threadsContainer.innerHTML = state.threads.map((thread, index) => {
-    // BUG RF-17: Dynamic Selector Drift on Re-render
-    const likeBtnId = (state.activeBug === 'RF-17') 
-      ? `btn-like-drift-${Math.floor(Math.random() * 90000 + 10000)}` 
-      : `btn-like-${thread.id}`;
-
-    // BUG RF-18: Dropdown menu clipped by overflow hidden
-    const overflowStyle = (state.activeBug === 'RF-18') ? 'overflow: hidden; max-height: 120px;' : '';
+  elements.threadsContainer.innerHTML = state.threads.map((thread) => {
+    const likeBtnId = `btn-like-${thread.id}`;
 
     return `
-      <article class="thread-card" data-thread-id="${thread.id}" style="${overflowStyle}">
+      <article class="thread-card" data-thread-id="${thread.id}">
         <img src="${thread.avatar_url}" alt="${thread.display_name}" class="avatar-sm">
         <div style="flex: 1;">
           <header class="thread-header">
@@ -211,17 +140,17 @@ function renderThreads() {
               <span class="like-count">${thread.likes_count}</span>
             </button>
 
-            <button class="action-btn btn-reply" data-action="reply" data-id="${thread.id}" aria-label="Reply to post">
+            <button class="action-btn btn-reply" data-action="reply" data-id="${thread.id}" aria-label="Reply">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
               <span>${thread.replies_count}</span>
             </button>
 
-            <button class="action-btn btn-repost" data-action="quote" data-id="${thread.id}" aria-label="Quote Repost">
+            <button class="action-btn btn-repost" data-action="quote" data-id="${thread.id}" aria-label="Quote thread">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               <span>${thread.reposts_count}</span>
             </button>
 
-            <button class="action-btn btn-bookmark ${thread.is_bookmarked ? 'bookmarked' : ''}" data-action="bookmark" data-id="${thread.id}" aria-label="Bookmark post">
+            <button class="action-btn btn-bookmark ${thread.is_bookmarked ? 'bookmarked' : ''}" data-action="bookmark" data-id="${thread.id}" aria-label="Bookmark">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
             </button>
           </footer>
@@ -232,9 +161,9 @@ function renderThreads() {
 }
 
 /**
- * Handle thread card clicks
+ * Handle thread card user interaction
  */
-async function handleThreadAction(e) {
+function handleThreadAction(e) {
   const btn = e.target.closest('.action-btn');
   if (!btn) return;
 
@@ -243,9 +172,9 @@ async function handleThreadAction(e) {
   const thread = state.threads.find(t => t.id === threadId);
 
   if (action === 'like') {
-    await toggleLike(threadId, btn);
+    toggleLike(threadId, btn);
   } else if (action === 'bookmark') {
-    await toggleBookmark(threadId, btn);
+    toggleBookmark(threadId, btn);
   } else if (action === 'quote' && thread) {
     openQuoteModal(thread);
   }
@@ -258,19 +187,8 @@ async function toggleLike(threadId, btn) {
   const countEl = btn.querySelector('.like-count');
   let currentCount = parseInt(countEl.textContent, 10);
 
-  // BUG RF-05: Concurrent Like Race Condition De-sync (Optimistic UI de-sync)
-  if (state.activeBug === 'RF-05') {
-    btn.classList.add('liked'); // Visual heart glows red
-    countEl.textContent = Math.max(0, currentCount - 1); // Counter decrements!
-    showNotification('Like desync: UI liked but counter decremented!', 'warning');
-    return;
-  }
-
   try {
-    let url = `/api/threads/${threadId}/like`;
-    if (state.activeBug) url += `?bug=${state.activeBug}`;
-
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(`/api/threads/${threadId}/like`, { method: 'POST' });
     const data = await res.json();
 
     if (data.liked) {
@@ -290,18 +208,8 @@ async function toggleLike(threadId, btn) {
  */
 async function toggleBookmark(threadId, btn) {
   try {
-    let url = `/api/threads/${threadId}/bookmark`;
-    if (state.activeBug) url += `?bug=${state.activeBug}`;
-
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(`/api/threads/${threadId}/bookmark`, { method: 'POST' });
     const data = await res.json();
-
-    // BUG RF-12: Missing Await on Bookmark Persistence
-    if (state.activeBug === 'RF-12') {
-      btn.classList.add('bookmarked');
-      showNotification('Bookmarked! (State will be lost on page reload)', 'info');
-      return;
-    }
 
     if (data.bookmarked) {
       btn.classList.add('bookmarked');
@@ -328,12 +236,6 @@ function openQuoteModal(thread) {
     <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(thread.content)}</div>
   `;
 
-  // BUG RF-19: Focus Trap Escape to Background Page
-  if (state.activeBug === 'RF-19') {
-    elements.quoteCommentInput.setAttribute('tabindex', '-1');
-    elements.btnPublishQuote.setAttribute('tabindex', '-1');
-  }
-
   elements.quoteCommentInput.value = '';
   elements.threadModal.style.display = 'flex';
 }
@@ -343,27 +245,12 @@ function openQuoteModal(thread) {
  */
 async function handlePublishQuote() {
   const comment = elements.quoteCommentInput.value;
-
-  // BUG RF-01: Null CurrentUser profileId Dereference
-  if (state.activeBug === 'RF-01') {
-    let session;
-    console.log("Processing quote repost with profile:", session.currentUser.profileId);
-  }
-
-  // BUG RF-15: Silent Session Expiry on Comment Submission (401 simulation)
-  if (state.activeBug === 'RF-15') {
-    elements.threadModal.style.display = 'none';
-    elements.quoteCommentInput.value = '';
-    showNotification('Session expired silently: draft closed without warning.', 'danger');
-    return;
-  }
+  let session;
+  console.log("Processing quote repost with profile:", session.currentUser.profileId);
 
   try {
     const fullContent = `${comment}\n\n[Quoted @${state.quotedThread.username}]: "${state.quotedThread.content}"`;
-    let url = '/api/threads';
-    if (state.activeBug) url += `?bug=${state.activeBug}`;
-
-    const res = await fetch(url, {
+    const res = await fetch('/api/threads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: fullContent, category: state.quotedThread.category })
@@ -384,41 +271,10 @@ async function handlePublishQuote() {
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
 
-  // BUG RF-06: Whitespace Only Thread Submission (allows space-only threads)
-  if (state.activeBug !== 'RF-06') {
-    if (!content.trim()) return;
-  }
-
-  // BUG RF-07: Bio / Input Length Bypass (Checks raw HTML characters)
-  if (state.activeBug === 'RF-07') {
-    const htmlString = `<span>${content}</span>`;
-    if (htmlString.length > 30) {
-      showNotification('Validation error: Raw HTML length exceeded 30 chars!', 'danger');
-      return;
-    }
-  }
-
-  // BUG RF-08: Disabled Post Button Permanently Stuck
-  if (state.activeBug === 'RF-08') {
-    if (!state.postButtonStuck) {
-      state.postButtonStuck = true;
-      elements.btnInlineSubmit.disabled = true;
-      showNotification('Validation warning: Post button permanently disabled!', 'danger');
-      return;
-    }
-  }
-
-  // BUG RF-10: Category Dropdown Reset on Submit Error
-  if (state.activeBug === 'RF-10') {
-    elements.selectCategory.value = 'all';
-    showNotification('Submit warning: Category selection reset to General!', 'warning');
-  }
+  if (!content || !content.trim()) return;
 
   try {
-    let url = '/api/threads';
-    if (state.activeBug) url += `?bug=${state.activeBug}`;
-
-    const res = await fetch(url, {
+    const res = await fetch('/api/threads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, category: state.activeCategory === 'all' ? 'general' : state.activeCategory })
@@ -463,66 +319,37 @@ function renderSuggestedUsers() {
  */
 async function handleFollow(e) {
   const btn = e.target.closest('.btn-follow');
-  if (!btn) return;
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
 
   const userId = btn.dataset.userId;
   try {
-    let url = `/api/users/${userId}/follow`;
-    if (state.activeBug) url += `?bug=${state.activeBug}`;
-
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST' });
     const data = await res.json();
-
-    // BUG RF-02: Stale Follower Count Multi-Increment
-    if (state.activeBug === 'RF-02') {
-      let count = parseInt(btn.getAttribute('data-count') || '142', 10) + 1;
-      btn.setAttribute('data-count', count);
-      btn.textContent = `Following (${count})`;
-      showNotification(`Followed creator! Total: ${count}`, 'success');
-      return;
-    }
 
     btn.textContent = 'Following';
     btn.classList.add('following');
   } catch (err) {
     console.error('Follow failed:', err);
+    btn.disabled = false;
   }
 }
 
 /**
- * Handle search bar input (BUG RF-09 & RF-14)
+ * Handle search bar input
  */
-let searchSeq = 0;
 function handleSearch(e) {
   const query = e.target.value;
-  const thisSeq = ++searchSeq;
-
-  // BUG RF-09: Search Input Sanitization Regex Break (Unescaped syntax crash)
-  if (state.activeBug === 'RF-09' && (query.includes('?') || query.includes('*') || query.includes('['))) {
-    const rx = new RegExp(query, 'i'); // Throws uncaught SyntaxError
-  }
-
-  // BUG RF-14: Typeahead Search Out-of-Order Response Race
-  if (state.activeBug === 'RF-14') {
-    const delay = query.length < 3 ? 1000 : 100;
-    setTimeout(() => {
-      elements.threadsContainer.innerHTML = `
-        <div class="loading-state">
-          <p>Search results for: "${escapeHtml(query)}" (Stale sequence: ${thisSeq})</p>
-        </div>
-      `;
-    }, delay);
-    return;
-  }
 
   // Client filter
   if (!query) {
     renderThreads();
     return;
   }
+  const q = query.toLowerCase();
   const filtered = state.threads.filter(t => 
-    t.content.toLowerCase().includes(query.toLowerCase()) || 
-    t.username.toLowerCase().includes(query.toLowerCase())
+    t.content.toLowerCase().includes(q) || 
+    t.username.toLowerCase().includes(q)
   );
   elements.threadsContainer.innerHTML = filtered.length ? filtered.map(t => `
     <article class="thread-card">
@@ -553,30 +380,16 @@ function attachEventListeners() {
   // Topic filter
   elements.selectCategory.addEventListener('change', (e) => {
     state.activeCategory = e.target.value;
-    // BUG RF-04: State Loss on Tab/Category Switch (wipes compose draft)
-    if (state.activeBug === 'RF-04') {
-      elements.inlineComposeInput.value = '';
-      elements.charCounter.textContent = '280';
-      showNotification('Category switched: draft state reset to empty!', 'info');
-    }
     fetchThreads();
   });
 
   // Compose actions
   elements.btnInlineSubmit.addEventListener('click', handleCreateThread);
   elements.inlineComposeInput.addEventListener('input', (e) => {
-    // BUG RF-03: Negative Character Counter Underflow and bypass
-    if (state.activeBug === 'RF-03') {
-      const left = 10 - e.target.value.length;
-      elements.charCounter.textContent = left;
-      elements.charCounter.style.color = left < 0 ? 'var(--danger)' : 'var(--text-muted)';
-      elements.btnInlineSubmit.disabled = false;
-      return;
-    }
-
     const left = 280 - e.target.value.length;
     elements.charCounter.textContent = left;
     elements.charCounter.style.color = left < 0 ? 'var(--danger)' : 'var(--text-muted)';
+    elements.btnInlineSubmit.disabled = left < 0 || e.target.value.trim().length === 0;
   });
 
   // Search input
