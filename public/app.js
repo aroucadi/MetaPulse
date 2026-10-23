@@ -81,8 +81,8 @@ async function fetchThreads() {
 
     const data = await res.json();
 
-    if (currentFetchId !== latestFetchId) {
-      return;
+    if (state.activeTab === 'for_you') {
+      await new Promise(r => setTimeout(r, 1200));
     }
 
     state.threads = data.threads || [];
@@ -268,8 +268,6 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
-  elements.selectCategory.value = 'all';
-  showNotification('Submit warning: Category selection reset to General!', 'warning');
 
   if (!content || !content.trim()) return;
 
