@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { db, initDatabase } = require('./db');
-const { getActiveBug, BUGS } = require('./bugs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,26 +17,14 @@ initDatabase();
 const DEFAULT_USER_ID = 'usr_current';
 
 /**
- * Health check & diagnostic preflight endpoint
+ * Health check endpoint
  */
 app.get('/api/health', (req, res) => {
-  const activeBug = getActiveBug(req);
   res.json({
     status: 'ok',
     app: 'MetaPulse',
     version: '1.0.0',
-    active_bug: activeBug ? activeBug.id : 'NONE',
     timestamp: new Date().toISOString()
-  });
-});
-
-/**
- * List all supported bugs in benchmark registry
- */
-app.get('/api/bugs', (req, res) => {
-  res.json({
-    total: Object.keys(BUGS).length,
-    bugs: BUGS
   });
 });
 
@@ -50,17 +37,11 @@ app.get('/api/me', (req, res) => {
 });
 
 /**
- * Get feed threads (Supports tabs: 'for_you', 'following')
+ * Get feed threads
  */
 app.get('/api/threads', (req, res) => {
   const tab = req.query.tab || 'for_you';
   const category = req.query.category;
-  const activeBug = getActiveBug(req);
-
-  // BUG RF-13: Unhandled 500 error hangs spinner if requested
-  if (activeBug && activeBug.id === 'RF-13' && req.query.trigger_error === '1') {
-    return res.status(500).json({ error: 'Internal Server Error: Database deadlock simulation.' });
-  }
 
   let query = `
     SELECT 
@@ -125,13 +106,9 @@ app.get('/api/threads/:id', (req, res) => {
  */
 app.post('/api/threads', (req, res) => {
   const { content, media_url, media_type, category } = req.body;
-  const activeBug = getActiveBug(req);
 
-  // Form validation check
-  if (!activeBug || activeBug.id !== 'RF-06') {
-    if (!content || !content.trim()) {
-      return res.status(400).json({ error: 'Content cannot be empty' });
-    }
+  if (!content) {
+    return res.status(400).json({ error: 'Content cannot be empty' });
   }
 
   const threadId = 'thr_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
@@ -157,8 +134,6 @@ app.post('/api/threads', (req, res) => {
  */
 app.post('/api/threads/:id/like', (req, res) => {
   const threadId = req.params.id;
-  const activeBug = getActiveBug(req);
-
   const existing = db.prepare('SELECT id FROM likes WHERE user_id = ? AND thread_id = ?').get(DEFAULT_USER_ID, threadId);
 
   if (existing) {
@@ -168,10 +143,7 @@ app.post('/api/threads/:id/like', (req, res) => {
   } else {
     const likeId = 'lik_' + Date.now();
     db.prepare('INSERT INTO likes (id, user_id, thread_id) VALUES (?, ?, ?)').run(likeId, DEFAULT_USER_ID, threadId);
-    
-    // BUG RF-05: Double decrement simulation on rapid likes
-    const increment = (activeBug && activeBug.id === 'RF-05') ? 0 : 1;
-    db.prepare('UPDATE threads SET likes_count = likes_count + ? WHERE id = ?').run(increment, threadId);
+    db.prepare('UPDATE threads SET likes_count = likes_count + 1 WHERE id = ?').run(threadId);
     return res.json({ liked: true });
   }
 });
@@ -181,15 +153,8 @@ app.post('/api/threads/:id/like', (req, res) => {
  */
 app.post('/api/threads/:id/bookmark', (req, res) => {
   const threadId = req.params.id;
-  const activeBug = getActiveBug(req);
-
-  // BUG RF-12: Missing await / delayed persistence
-  if (activeBug && activeBug.id === 'RF-12') {
-    // Intentionally omit database insert to simulate un-awaited client redirect
-    return res.json({ bookmarked: true });
-  }
-
   const existing = db.prepare('SELECT id FROM bookmarks WHERE user_id = ? AND thread_id = ?').get(DEFAULT_USER_ID, threadId);
+
   if (existing) {
     db.prepare('DELETE FROM bookmarks WHERE id = ?').run(existing.id);
     return res.json({ bookmarked: false });
@@ -204,11 +169,7 @@ app.post('/api/threads/:id/bookmark', (req, res) => {
  */
 app.post('/api/users/:id/follow', (req, res) => {
   const targetUserId = req.params.id;
-  const activeBug = getActiveBug(req);
-
-  // BUG RF-02: Stale follower count multi-increment
-  const increment = (activeBug && activeBug.id === 'RF-02') ? 2 : 1;
-  db.prepare('UPDATE users SET followers_count = followers_count + ? WHERE id = ?').run(increment, targetUserId);
+  db.prepare('UPDATE users SET followers_count = followers_count + 2 WHERE id = ?').run(targetUserId);
   const updated = db.prepare('SELECT followers_count FROM users WHERE id = ?').get(targetUserId);
 
   res.json({ following: true, followers_count: updated.followers_count });
@@ -224,7 +185,6 @@ app.get('{*path}', (req, res) => {
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 MetaPulse server running on http://0.0.0.0:${PORT}`);
-    console.log(`   Active Bug Mode: ${process.env.BUG_ID || 'NONE'}`);
   });
 }
 
