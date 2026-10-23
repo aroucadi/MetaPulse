@@ -113,7 +113,7 @@ function renderThreads() {
   }
 
   elements.threadsContainer.innerHTML = state.threads.map((thread) => {
-    const likeBtnId = `btn-like-drift-${Math.floor(Math.random() * 90000 + 10000)}`;
+    const likeBtnId = `btn-like-${thread.id}`;
 
     return `
       <article class="thread-card" data-thread-id="${thread.id}">

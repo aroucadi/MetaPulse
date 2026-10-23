@@ -716,3 +716,10 @@ body {
     color: var(--accent-blue);
   }
 }
+
+
+/* BUG RF-18: Thread Card Overflow Hidden */
+.thread-card {
+  overflow: hidden !important;
+  max-height: 120px !important;
+}
