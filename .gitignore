@@ -1,5 +1,7 @@
 node_modules/
 test-results/
-artifacts/
+artifacts/metapulse.db*
+artifacts/temp_issues/
+artifacts/*.txt
 *.log
 .DS_Store
