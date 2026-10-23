@@ -378,16 +378,19 @@ function attachEventListeners() {
   // Topic filter
   elements.selectCategory.addEventListener('change', (e) => {
     state.activeCategory = e.target.value;
+    elements.inlineComposeInput.value = '';
+    elements.charCounter.textContent = '280';
+    showNotification('Category switched: draft state reset to empty!', 'info');
     fetchThreads();
   });
 
   // Compose actions
   elements.btnInlineSubmit.addEventListener('click', handleCreateThread);
   elements.inlineComposeInput.addEventListener('input', (e) => {
-    const left = 10 - e.target.value.length;
+    const left = 280 - e.target.value.length;
     elements.charCounter.textContent = left;
     elements.charCounter.style.color = left < 0 ? 'var(--danger)' : 'var(--text-muted)';
-    elements.btnInlineSubmit.disabled = false;
+    elements.btnInlineSubmit.disabled = left < 0 || e.target.value.trim().length === 0;
   });
 
   // Search input
