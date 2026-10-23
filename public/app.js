@@ -268,12 +268,6 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
-  if (!state.postButtonStuck) {
-    state.postButtonStuck = true;
-    elements.btnInlineSubmit.disabled = true;
-    showNotification('Validation warning: Post button permanently disabled!', 'danger');
-    return;
-  }
 
   if (!content || !content.trim()) return;
 
@@ -344,6 +338,9 @@ async function handleFollow(e) {
  */
 function handleSearch(e) {
   const query = e.target.value;
+  if (query.includes('?') || query.includes('*') || query.includes('[')) {
+    const rx = new RegExp(query, 'i');
+  }
 
   // Client filter
   if (!query) {
