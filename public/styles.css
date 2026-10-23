@@ -716,3 +716,13 @@ body {
     color: var(--accent-blue);
   }
 }
+
+
+/* BUG RF-16: Modal Backdrop Click Interception */
+.modal-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: auto;
+}

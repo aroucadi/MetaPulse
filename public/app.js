@@ -245,10 +245,6 @@ function openQuoteModal(thread) {
  */
 async function handlePublishQuote() {
   const comment = elements.quoteCommentInput.value;
-  elements.threadModal.style.display = 'none';
-  elements.quoteCommentInput.value = '';
-  showNotification('Session expired silently: draft closed without warning.', 'danger');
-  return;
 
   try {
     const fullContent = `${comment}\n\n[Quoted @${state.quotedThread.username}]: "${state.quotedThread.content}"`;
