@@ -186,9 +186,21 @@ function handleThreadAction(e) {
 async function toggleLike(threadId, btn) {
   const countEl = btn.querySelector('.like-count');
   let currentCount = parseInt(countEl.textContent, 10);
-  btn.classList.add('liked');
-  countEl.textContent = Math.max(0, currentCount - 1);
-  showNotification('Like desync: UI liked but counter decremented!', 'warning');
+
+  try {
+    const res = await fetch(`/api/threads/${threadId}/like`, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.liked) {
+      btn.classList.add('liked');
+      countEl.textContent = currentCount + 1;
+    } else {
+      btn.classList.remove('liked');
+      countEl.textContent = Math.max(0, currentCount - 1);
+    }
+  } catch (err) {
+    console.error('Like toggle failed:', err);
+  }
 }
 
 /**
@@ -256,8 +268,7 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
-
-  if (!content || !content.trim()) return;
+  if (!content) return;
 
   try {
     const res = await fetch('/api/threads', {

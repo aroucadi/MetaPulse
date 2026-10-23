@@ -107,7 +107,7 @@ app.get('/api/threads/:id', (req, res) => {
 app.post('/api/threads', (req, res) => {
   const { content, media_url, media_type, category } = req.body;
 
-  if (!content || !content.trim()) {
+  if (!content) {
     return res.status(400).json({ error: 'Content cannot be empty' });
   }
 
