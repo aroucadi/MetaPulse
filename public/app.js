@@ -317,19 +317,19 @@ function renderSuggestedUsers() {
  */
 async function handleFollow(e) {
   const btn = e.target.closest('.btn-follow');
-  if (!btn) return;
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
 
   const userId = btn.dataset.userId;
   try {
     const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST' });
     const data = await res.json();
 
-    let count = parseInt(btn.getAttribute('data-count') || '142', 10) + 1;
-    btn.setAttribute('data-count', count);
-    btn.textContent = `Following (${count})`;
-    showNotification(`Followed creator! Total: ${count}`, 'success');
+    btn.textContent = 'Following';
+    btn.classList.add('following');
   } catch (err) {
     console.error('Follow failed:', err);
+    btn.disabled = false;
   }
 }
 
@@ -384,10 +384,10 @@ function attachEventListeners() {
   // Compose actions
   elements.btnInlineSubmit.addEventListener('click', handleCreateThread);
   elements.inlineComposeInput.addEventListener('input', (e) => {
-    const left = 280 - e.target.value.length;
+    const left = 10 - e.target.value.length;
     elements.charCounter.textContent = left;
     elements.charCounter.style.color = left < 0 ? 'var(--danger)' : 'var(--text-muted)';
-    elements.btnInlineSubmit.disabled = left < 0 || e.target.value.trim().length === 0;
+    elements.btnInlineSubmit.disabled = false;
   });
 
   // Search input
