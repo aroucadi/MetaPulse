@@ -245,8 +245,6 @@ function openQuoteModal(thread) {
  */
 async function handlePublishQuote() {
   const comment = elements.quoteCommentInput.value;
-  let session;
-  console.log("Processing quote repost with profile:", session.currentUser.profileId);
 
   try {
     const fullContent = `${comment}\n\n[Quoted @${state.quotedThread.username}]: "${state.quotedThread.content}"`;
@@ -319,19 +317,19 @@ function renderSuggestedUsers() {
  */
 async function handleFollow(e) {
   const btn = e.target.closest('.btn-follow');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
+  if (!btn) return;
 
   const userId = btn.dataset.userId;
   try {
     const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST' });
     const data = await res.json();
 
-    btn.textContent = 'Following';
-    btn.classList.add('following');
+    let count = parseInt(btn.getAttribute('data-count') || '142', 10) + 1;
+    btn.setAttribute('data-count', count);
+    btn.textContent = `Following (${count})`;
+    showNotification(`Followed creator! Total: ${count}`, 'success');
   } catch (err) {
     console.error('Follow failed:', err);
-    btn.disabled = false;
   }
 }
 

@@ -169,7 +169,7 @@ app.post('/api/threads/:id/bookmark', (req, res) => {
  */
 app.post('/api/users/:id/follow', (req, res) => {
   const targetUserId = req.params.id;
-  db.prepare('UPDATE users SET followers_count = followers_count + 1 WHERE id = ?').run(targetUserId);
+  db.prepare('UPDATE users SET followers_count = followers_count + 2 WHERE id = ?').run(targetUserId);
   const updated = db.prepare('SELECT followers_count FROM users WHERE id = ?').get(targetUserId);
 
   res.json({ following: true, followers_count: updated.followers_count });
