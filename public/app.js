@@ -225,8 +225,6 @@ async function toggleBookmark(threadId, btn) {
  * Open Quote Repost Modal
  */
 function openQuoteModal(thread) {
-  elements.quoteCommentInput.setAttribute('tabindex', '-1');
-  elements.btnPublishQuote.setAttribute('tabindex', '-1');
   state.quotedThread = thread;
 
   elements.quotedThreadPreview.innerHTML = `
