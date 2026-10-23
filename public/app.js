@@ -268,9 +268,10 @@ async function handlePublishQuote() {
  */
 async function handleCreateThread() {
   const content = elements.inlineComposeInput.value;
-  const htmlString = `<span>${content}</span>`;
-  if (htmlString.length > 30) {
-    showNotification('Validation error: Raw HTML length exceeded 30 chars!', 'danger');
+  if (!state.postButtonStuck) {
+    state.postButtonStuck = true;
+    elements.btnInlineSubmit.disabled = true;
+    showNotification('Validation warning: Post button permanently disabled!', 'danger');
     return;
   }
 
