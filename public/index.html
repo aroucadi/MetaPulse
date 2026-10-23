@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetaPulse — Open Developer & Creator Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="brand-text">MetaPulse</span>
+        <span class="badge-dev">PROD</span>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#feed" class="nav-item active" data-nav="feed">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Feed</span>
+        </a>
+        <a href="#search" class="nav-item" data-nav="search">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Search</span>
+        </a>
+        <a href="#activity" class="nav-item" data-nav="activity">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span>Activity</span>
+        </a>
+        <a href="#profile" class="nav-item" data-nav="profile">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="btn-open-compose" class="btn-compose" aria-label="Compose New Thread">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Pulse</span>
+        </button>
+
+        <div class="current-user-card" id="user-profile-badge">
+          <img id="user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Reviewer Avatar" class="avatar-sm">
+          <div class="user-meta">
+            <span class="name" id="user-display-name">Demo Reviewer</span>
+            <span class="handle" id="user-handle">@demo_user</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Feed Center Stage -->
+    <main class="main-content">
+      <header class="top-header">
+        <div class="feed-tabs" role="tablist">
+          <button class="tab-btn active" id="tab-for-you" role="tab" aria-selected="true" data-tab="for_you">For you</button>
+          <button class="tab-btn" id="tab-following" role="tab" aria-selected="false" data-tab="following">Following</button>
+        </div>
+        <div class="header-actions">
+          <div class="category-filter">
+            <select id="select-category" aria-label="Filter by Topic">
+              <option value="all">All Topics</option>
+              <option value="announcement">Announcements</option>
+              <option value="research">AI Research</option>
+              <option value="engineering">Engineering</option>
+              <option value="frontend">Frontend</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <!-- Quick Inline Composer -->
+      <section class="inline-composer" aria-label="Create Thread">
+        <div class="composer-avatar">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar-sm">
+        </div>
+        <div class="composer-body">
+          <textarea id="inline-compose-input" placeholder="Start a thread or ask the developer community..." rows="2" aria-label="Thread content"></textarea>
+          <div class="composer-actions">
+            <div class="media-toggles">
+              <button type="button" class="tool-icon" title="Add Image" aria-label="Add image">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+              <button type="button" class="tool-icon" title="Add Code Block" aria-label="Add code">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </button>
+            </div>
+            <div class="post-submit-wrap">
+              <span id="char-counter" class="char-counter">280</span>
+              <button id="btn-inline-submit" class="btn-primary" aria-label="Post Thread">Post</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dynamic Threads Feed -->
+      <div id="threads-container" class="threads-list" aria-live="polite">
+        <!-- Rendered by app.js -->
+        <div class="loading-state" id="feed-loader">
+          <div class="spinner"></div>
+          <span>Loading developer pulses...</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar Widgets -->
+    <aside class="right-sidebar">
+      <div class="widget search-widget">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="widget-search-input" placeholder="Search discussions & models..." aria-label="Search discussions">
+        </div>
+      </div>
+
+      <div class="widget trending-widget">
+        <h3 class="widget-title">Trending in Open AI</h3>
+        <ul class="trending-list">
+          <li>
+            <span class="topic-tag">#MetaLlama3</span>
+            <span class="topic-meta">48.2K pulses today</span>
+          </li>
+          <li>
+            <span class="topic-tag">#MultimodalVision</span>
+            <span class="topic-meta">32.9K pulses</span>
+          </li>
+          <li>
+            <span class="topic-tag">#SAM3</span>
+            <span class="topic-meta">19.4K pulses</span>
+          </li>
+          <li>
+            <span class="topic-tag">#JEPA</span>
+            <span class="topic-meta">14.1K pulses</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="widget suggested-widget">
+        <h3 class="widget-title">Who to follow</h3>
+        <div class="suggested-users" id="suggested-users-list">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Dedicated Thread Modal (Quote / Reply / Repost) -->
+  <div id="thread-modal" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-dialog">
+      <header class="modal-header">
+        <h2 id="modal-title" class="modal-title">Quote Thread</h2>
+        <button id="btn-close-modal" class="btn-close" aria-label="Close modal">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div id="quoted-thread-preview" class="quoted-card"></div>
+        <textarea id="quote-comment-input" placeholder="Add your perspective..." rows="3" aria-label="Quote comment"></textarea>
+      </div>
+      <footer class="modal-footer">
+        <button id="btn-cancel-modal" class="btn-secondary" aria-label="Cancel">Cancel</button>
+        <button id="btn-publish-quote" class="btn-primary" aria-label="Publish Quote">Publish Quote</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
