@@ -76,7 +76,7 @@ async function fetchThreads() {
     const url = `/api/threads?tab=${state.activeTab}&category=${state.activeCategory}`;
     const res = await fetch(url);
     if (!res.ok) {
-      return;
+      throw new Error(`Server returned HTTP ${res.status}`);
     }
 
     const data = await res.json();
@@ -88,7 +88,14 @@ async function fetchThreads() {
     state.threads = data.threads || [];
     renderThreads();
   } catch (err) {
-    return;
+    elements.threadsContainer.innerHTML = `
+      <div class="loading-state">
+        <p style="color: var(--danger);">Failed to load threads: ${err.message}</p>
+      </div>
+    `;
+  } finally {
+    state.isLoading = false;
+    if (elements.feedLoader) elements.feedLoader.style.display = 'none';
   }
 }
 
@@ -329,8 +336,19 @@ async function handleFollow(e) {
 /**
  * Handle search bar input
  */
+let searchSeq = 0;
 function handleSearch(e) {
   const query = e.target.value;
+  const thisSeq = ++searchSeq;
+  const delay = query.length < 3 ? 1000 : 100;
+  setTimeout(() => {
+    elements.threadsContainer.innerHTML = `
+      <div class="loading-state">
+        <p>Search results for: "${escapeHtml(query)}" (Stale sequence: ${thisSeq})</p>
+      </div>
+    `;
+  }, delay);
+  return;
 
   // Client filter
   if (!query) {
