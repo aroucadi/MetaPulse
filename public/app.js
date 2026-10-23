@@ -81,8 +81,8 @@ async function fetchThreads() {
 
     const data = await res.json();
 
-    if (state.activeTab === 'for_you') {
-      await new Promise(r => setTimeout(r, 1200));
+    if (currentFetchId !== latestFetchId) {
+      return;
     }
 
     state.threads = data.threads || [];
@@ -208,14 +208,9 @@ async function toggleLike(threadId, btn) {
  */
 async function toggleBookmark(threadId, btn) {
   try {
-    const res = await fetch(`/api/threads/${threadId}/bookmark`, { method: 'POST' });
-    const data = await res.json();
-
-    if (data.bookmarked) {
-      btn.classList.add('bookmarked');
-    } else {
-      btn.classList.remove('bookmarked');
-    }
+    fetch(`/api/threads/${threadId}/bookmark`, { method: 'POST' });
+    btn.classList.add('bookmarked');
+    showNotification('Bookmarked! (State will be lost on page reload)', 'info');
   } catch (err) {
     console.error('Bookmark toggle failed:', err);
   }
