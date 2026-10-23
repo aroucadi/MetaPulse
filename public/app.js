@@ -76,7 +76,7 @@ async function fetchThreads() {
     const url = `/api/threads?tab=${state.activeTab}&category=${state.activeCategory}`;
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`Server returned HTTP ${res.status}`);
+      return;
     }
 
     const data = await res.json();
@@ -88,14 +88,7 @@ async function fetchThreads() {
     state.threads = data.threads || [];
     renderThreads();
   } catch (err) {
-    elements.threadsContainer.innerHTML = `
-      <div class="loading-state">
-        <p style="color: var(--danger);">Failed to load threads: ${err.message}</p>
-      </div>
-    `;
-  } finally {
-    state.isLoading = false;
-    if (elements.feedLoader) elements.feedLoader.style.display = 'none';
+    return;
   }
 }
 
@@ -208,9 +201,14 @@ async function toggleLike(threadId, btn) {
  */
 async function toggleBookmark(threadId, btn) {
   try {
-    fetch(`/api/threads/${threadId}/bookmark`, { method: 'POST' });
-    btn.classList.add('bookmarked');
-    showNotification('Bookmarked! (State will be lost on page reload)', 'info');
+    const res = await fetch(`/api/threads/${threadId}/bookmark`, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.bookmarked) {
+      btn.classList.add('bookmarked');
+    } else {
+      btn.classList.remove('bookmarked');
+    }
   } catch (err) {
     console.error('Bookmark toggle failed:', err);
   }
