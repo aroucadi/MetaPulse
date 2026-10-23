@@ -245,6 +245,10 @@ function openQuoteModal(thread) {
  */
 async function handlePublishQuote() {
   const comment = elements.quoteCommentInput.value;
+  elements.threadModal.style.display = 'none';
+  elements.quoteCommentInput.value = '';
+  showNotification('Session expired silently: draft closed without warning.', 'danger');
+  return;
 
   try {
     const fullContent = `${comment}\n\n[Quoted @${state.quotedThread.username}]: "${state.quotedThread.content}"`;
@@ -336,19 +340,8 @@ async function handleFollow(e) {
 /**
  * Handle search bar input
  */
-let searchSeq = 0;
 function handleSearch(e) {
   const query = e.target.value;
-  const thisSeq = ++searchSeq;
-  const delay = query.length < 3 ? 1000 : 100;
-  setTimeout(() => {
-    elements.threadsContainer.innerHTML = `
-      <div class="loading-state">
-        <p>Search results for: "${escapeHtml(query)}" (Stale sequence: ${thisSeq})</p>
-      </div>
-    `;
-  }, delay);
-  return;
 
   // Client filter
   if (!query) {
