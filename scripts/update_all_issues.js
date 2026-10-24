@@ -563,6 +563,13 @@ async function updateIssues() {
   }
 
   for (const item of ISSUES) {
+    // Clean up steps to reference native git branch reproduction
+    const cleanSteps = item.steps.map(s => {
+      return s.replace(/\s*\(?http:\/\/localhost:3000\?bug=RF-\d+\)?/g, ' `http://localhost:3000`')
+              .replace(/Start the local MetaPulse server \(`npm start`\) and navigate to `http:\/\/localhost:3000`\./, 'Start the server (`npm start`) and navigate to `http://localhost:3000`.')
+              .replace(/Navigate to `http:\/\/localhost:3000`\./, 'Navigate to `http://localhost:3000`.');
+    });
+
     const bodyContent = `### 📌 Defect Overview
 ${item.overview}
 
@@ -572,13 +579,20 @@ ${item.overview}
 - **Target Application**: MetaPulse Web Monolith
 - **Affected Module**: \`${item.module}\`
 - **Benchmark Defect ID**: \`${item.id}\`
-- **Interactive Reproduction URL**: \`http://localhost:3000?bug=${item.id}\`
+- **Reproduction Branch**: [\`bug/${item.id}\`](https://github.com/aroucadi/MetaPulse/tree/bug/${item.id})
+- **Clean Baseline**: [\`main\`](https://github.com/aroucadi/MetaPulse/tree/main)
 - **Severity**: ${item.severity}
 
 ---
 
-### 📋 Steps to Reproduce
-${item.steps.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
+### 📋 Steps to Reproduce (SWE-bench Standard)
+1. Check out the isolated benchmark branch:
+   \`\`\`bash
+   git checkout bug/${item.id}
+   npm start
+   \`\`\`
+2. Open your browser and navigate to \`http://localhost:3000\`.
+${cleanSteps.filter((_, idx) => idx > 0).map((s, idx) => `${idx + 3}. ${s}`).join('\n')}
 
 ---
 
